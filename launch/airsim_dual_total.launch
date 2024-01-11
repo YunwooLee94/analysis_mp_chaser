@@ -11,7 +11,7 @@
         <node name="rviz" pkg="rviz" type="rviz" args="-d $(find analysis_mp_chaser)/rviz_config/dual_total.rviz"/>
     </group>
 
-    <node pkg="analysis_mp_chaser" type="analyzer" name="analyzer" output="screen">
+    <node pkg="analysis_mp_chaser" type="analyzer_mp_chaser" name="analyzer" output="screen">
         <param name="is_dual" value="true"/>
         <param name="write_total_trajectory" value="false"/>
         <param name="total_trajectory_filename_write" value="$(find analysis_mp_chaser)/log/actor_trajectory_airsim_dual.txt"/>

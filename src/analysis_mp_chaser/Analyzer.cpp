@@ -2,6 +2,8 @@
 // Created by larr-laptop on 24. 1. 6.
 //
 #include <analysis_mp_chaser/Analyzer.h>
+#include "analysis_los_keeper/Analyzer.h"
+
 
 using namespace std;
 
@@ -219,4 +221,6 @@ void mp_chaser::Analyzer::PublishVisualization() {
     if(not bearing_vector_vis_.points.empty())
         pub_total_bearing_vector_history_.publish(bearing_vector_vis_);
 }
+
+
 

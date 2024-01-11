@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   roscpp
         tf
+        los_keeper
 )
 
 catkin_package(
@@ -19,7 +20,11 @@ catkin_package(
 
 include_directories( include ${catkin_INCLUDE_DIRS})
 
-file(GLOB ANALYZER_SRC src/analysis_mp_chaser/Analyzer.cpp)
+file(GLOB ANALYZER_MPCHASER_SRC src/analysis_mp_chaser/Analyzer.cpp)
+file(GLOB ANALYZER_LOSKEEPER_SRC src/analysis_los_keeper/Analyzer.cpp)
 
-add_executable(analyzer test/main_airsim.cpp ${ANALYZER_SRC})
-target_link_libraries(analyzer ${catkin_LIBRARIES})
+add_executable(analyzer_mp_chaser test/main_airsim.cpp ${ANALYZER_MPCHASER_SRC})
+target_link_libraries(analyzer_mp_chaser ${catkin_LIBRARIES})
+
+add_executable(analyzer_los_keeper test/main_simulator.cpp ${ANALYZER_LOSKEEPER_SRC})
+target_link_libraries(analyzer_los_keeper ${catkin_LIBRARIES})
