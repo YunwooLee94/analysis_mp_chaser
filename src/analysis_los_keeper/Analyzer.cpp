@@ -12,7 +12,6 @@ los_keeper::Analyzer::Analyzer(): nh_("~"){
     target_vis_publisher_ = nh_.advertise<visualization_msgs::Marker>("current_target_vis",1);
     obstacle_list_vis_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("current_obstacle_list_vis",1);
 
-
     keeper_state_vis_.header.frame_id = "map";
     target_state_vis_.header.frame_id = "map";
     obstacle_state_vis_.header.frame_id = "map";
@@ -43,6 +42,19 @@ los_keeper::Analyzer::Analyzer(): nh_("~"){
     obstacle_state_vis_.color.r = 0.5;
     obstacle_state_vis_.color.g = 0.5;
     obstacle_state_vis_.color.b = 0.5;
+    // Orientation
+    target_state_vis_.pose.orientation.w = 1.0;
+    target_state_vis_.pose.orientation.x = 0.0;
+    target_state_vis_.pose.orientation.y = 0.0;
+    target_state_vis_.pose.orientation.z = 0.0;
+    keeper_state_vis_.pose.orientation.w = 1.0;
+    keeper_state_vis_.pose.orientation.x = 0.0;
+    keeper_state_vis_.pose.orientation.y = 0.0;
+    keeper_state_vis_.pose.orientation.z = 0.0;
+    obstacle_state_vis_.pose.orientation.w = 1.0;
+    obstacle_state_vis_.pose.orientation.x = 0.0;
+    obstacle_state_vis_.pose.orientation.y = 0.0;
+    obstacle_state_vis_.pose.orientation.z = 0.0;
 }
 
 void los_keeper::Analyzer::run() {
@@ -62,22 +74,36 @@ void los_keeper::Analyzer::CallbackTargetState(const los_keeper::ObjectStatus_<s
     current_target_state_.px = state->px;
     current_target_state_.py = state->py;
     current_target_state_.pz = state->pz;
+    target_state_vis_.pose.position.x = state->px;
+    target_state_vis_.pose.position.y = state->py;
+    target_state_vis_.pose.position.z = state->pz;
+    got_target_info = true;
 }
 
 void los_keeper::Analyzer::CallbackKeeperState(const los_keeper::ObjectStatus_<std::allocator<void>>::ConstPtr &state) {
     current_keeper_state_.px = state->px;
     current_keeper_state_.py = state->py;
     current_keeper_state_.pz = state->pz;
+    keeper_state_vis_.pose.position.x = state->px;
+    keeper_state_vis_.pose.position.y = state->py;
+    keeper_state_vis_.pose.position.z = state->pz;
+    got_keeper_info = true;
 }
 
 void los_keeper::Analyzer::CallbackObstacleListState(
         const los_keeper::ObjectStatusArray_<std::allocator<void>>::ConstPtr &state_list) {
+    got_obstacle_info = true;
     current_obstacle_list_state_.clear();
+    obstacle_state_list_vis_.markers.clear();
     State obstacle_info{0.0,0.0,0.0,0.0,0.0,0.0};
     for(int i =0;i<state_list->object_status_array.size();i++){
         obstacle_info.px = state_list->object_status_array[i].px;
         obstacle_info.py = state_list->object_status_array[i].py;
         obstacle_info.pz = state_list->object_status_array[i].pz;
+        obstacle_state_vis_.pose.position.x = obstacle_info.px;
+        obstacle_state_vis_.pose.position.y = obstacle_info.py;
+        obstacle_state_vis_.pose.position.z = obstacle_info.pz;
         current_obstacle_list_state_.push_back(obstacle_info);
+        obstacle_state_list_vis_.markers.push_back(obstacle_state_vis_);
     }
 }

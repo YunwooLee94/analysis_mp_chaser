@@ -49,6 +49,10 @@ namespace los_keeper{
         visualization_msgs::Marker target_state_vis_;
         visualization_msgs::Marker obstacle_state_vis_;
         visualization_msgs::MarkerArray obstacle_state_list_vis_;
+        bool got_obstacle_info{false};
+        bool got_target_info{false};
+        bool got_keeper_info{false};
+
 
         void VisualizeData();
     };
