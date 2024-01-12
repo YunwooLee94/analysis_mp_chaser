@@ -10,6 +10,8 @@
 #include <vector>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <fstream>
+#include <nav_msgs/Path.h>
 
 namespace los_keeper{
     using namespace std;
@@ -21,6 +23,11 @@ namespace los_keeper{
         double vx;
         double vy;
         double vz;
+    };
+    struct Point{
+        double px;
+        double py;
+        double pz;
     };
     class Analyzer{
     public:
@@ -36,10 +43,21 @@ namespace los_keeper{
         ros::Publisher target_vis_publisher_;
         ros::Publisher keeper_vis_publisher_;
         ros::Publisher obstacle_list_vis_publisher_;
+        ros::Publisher obstacle_prediction_vis_publisher_;
+
+        ros::Publisher target_total_vis_publisher_;
+        ros::Publisher keeper_total_vis_publisher_;
+        ros::Publisher obstacle_list_total_vis_publisher_;
+        ros::Publisher bearing_vector_history_publisher_;
 
         void CallbackTargetState(const los_keeper::ObjectStatus::ConstPtr &state);
         void CallbackKeeperState(const los_keeper::ObjectStatus::ConstPtr &state);
         void CallbackObstacleListState(const los_keeper::ObjectStatusArray::ConstPtr  &state_list);
+
+        bool is_2d_;
+        bool write_total_trajectory_;
+        string total_trajectory_filename_write_;
+        string total_trajectory_filename_read_;
 
         State current_keeper_state_;
         State current_target_state_;
@@ -49,12 +67,32 @@ namespace los_keeper{
         visualization_msgs::Marker target_state_vis_;
         visualization_msgs::Marker obstacle_state_vis_;
         visualization_msgs::MarkerArray obstacle_state_list_vis_;
+        visualization_msgs::Marker obstacle_prediction_vis_;
+
         bool got_obstacle_info{false};
         bool got_target_info{false};
         bool got_keeper_info{false};
 
+        double t0_;
+        int num_obstacle_;
+
+        vector<double> time_history_;
+        vector<Point> keeper_total_trajectory_;
+        vector<Point> target_total_trajectory_;
+        vector<vector<Point>> obstacle_total_trajectory_;
+        visualization_msgs::Marker keeper_total_trajectory_vis_;
+        visualization_msgs::Marker target_total_trajectory_vis_;
+        visualization_msgs::Marker obstacle_separate_trajectory_vis_;
+        visualization_msgs::MarkerArray obstacle_total_trajectory_vis_;
+        visualization_msgs::Marker bearing_vector_history_vis_;
+
+
 
         void VisualizeData();
+        void WriteCurrentPositions();
+        void ReadActorTrajectories();
+
+
     };
 }
 

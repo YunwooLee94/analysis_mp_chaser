@@ -6,6 +6,6 @@
 int main(int argc, char** argv){
     ros::init(argc,argv,"analyzer_los_keeper");
     los_keeper::Analyzer analyzer;
-
+    analyzer.run();
     return 0;
 }
