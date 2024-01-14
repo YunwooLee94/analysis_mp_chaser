@@ -82,6 +82,22 @@ Visualization Manager:
         "": true
       Queue Size: 100
       Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /los_keeper/keeper_okay_vis
+      Name: KeeperOkayVis
+      Namespaces:
+        KeeperOkay: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /los_keeper/target_okay_vis
+      Name: TargetOkayVis
+      Namespaces:
+        TargetOkay: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
