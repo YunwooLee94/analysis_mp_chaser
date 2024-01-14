@@ -68,10 +68,16 @@ mp_chaser::Analyzer::Analyzer() : nh_("~") {
     current_drone_vis_.scale.z = 0.8;
     current_target1_vis_.scale.x = 0.6;
     current_target1_vis_.scale.y = 0.6;
-    current_target1_vis_.scale.z = 1.6;
+    if(is_dual_)
+        current_target1_vis_.scale.z = 1.2;
+    else
+        current_target1_vis_.scale.z = 1.6;
     current_target2_vis_.scale.x = 0.6;
     current_target2_vis_.scale.y = 0.6;
-    current_target2_vis_.scale.z = 1.6;
+    if(is_dual_)
+        current_target2_vis_.scale.z = 1.2;
+    else
+        current_target2_vis_.scale.z = 1.6;
 
     current_drone_vis_.pose.orientation.w = 1.0;
     current_drone_vis_.pose.orientation.x = 0.0;
@@ -107,7 +113,6 @@ void mp_chaser::Analyzer::CbDronePose(const nav_msgs::Odometry_<std::allocator<v
     drone_position_.z = -pose->pose.pose.position.z;
     current_drone_vis_.pose.position.x = drone_position_.x;
     current_drone_vis_.pose.position.y = drone_position_.y;
-    current_drone_vis_.pose.position.z = drone_position_.z;
     drone_position_flag_ = true;
 }
 
@@ -118,6 +123,11 @@ void mp_chaser::Analyzer::CbTarget1Pose(const geometry_msgs::PoseStamped_<std::a
     current_target1_vis_.pose.position.x = target1_position_.x;
     current_target1_vis_.pose.position.y = target1_position_.y;
     current_target1_vis_.pose.position.z = target1_position_.z;
+    if(is_dual_)
+        current_target1_vis_.pose.position.z = target1_position_.z+0.6;
+    else
+        current_target1_vis_.pose.position.z = target1_position_.z+0.8;
+
     target1_position_flag_ = true;
 }
 
@@ -128,6 +138,10 @@ void mp_chaser::Analyzer::CbTarget2Pose(const geometry_msgs::PoseStamped_<std::a
     current_target2_vis_.pose.position.x = target2_position_.x;
     current_target2_vis_.pose.position.y = target2_position_.y;
     current_target2_vis_.pose.position.z = target2_position_.z;
+    if(is_dual_)
+        current_target2_vis_.pose.position.z = target2_position_.z+0.6;
+    else
+        current_target2_vis_.pose.position.z = target2_position_.z+0.8;
     target2_position_flag_ = true;
 }
 

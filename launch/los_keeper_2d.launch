@@ -11,11 +11,15 @@
         <node name="rviz" pkg="rviz" type="rviz" args="-d $(find analysis_mp_chaser)/rviz_config/los_keeper_2d.rviz"/>
     </group>
 
-        <node pkg="analysis_mp_chaser" type="analyzer_los_keeper" name="analyzer" output="screen">
-            <param name="is_2d" value="true"/>
-            <param name="write_total_trajectory" value="false"/>
-            <param name="total_trajectory_filename_write" value="$(find analysis_mp_chaser)/log/actor_trajectory_simulator_2d.txt"/>
-            <param name="total_trajectory_filename_read" value="$(find analysis_mp_chaser)/data/actor_trajectory_simulator_2d.txt"/>
-        </node>
+    <node pkg="analysis_mp_chaser" type="analyzer_los_keeper" name="analyzer" output="screen">
+        <param name="is_2d" value="true"/>
+        <param name="write_total_trajectory" value="false"/>
+        <param name="total_trajectory_filename_write" value="$(find analysis_mp_chaser)/log/actor_trajectory_simulator_2d.txt"/>
+        <param name="total_trajectory_filename_read" value="$(find analysis_mp_chaser)/data/actor_trajectory_simulator_2d.txt"/>
+    </node>
+    <node pkg="los_keeper" type="los_keeper" name="los_keeper" output="screen">
+        <rosparam command="load" file="$(find los_keeper)/param/plan_2d_sc1_multi_thread.yaml"/>
+        <rosparam command="load" file="$(find los_keeper)/param/visualization.yaml"/>
+    </node>
 
 </launch>
