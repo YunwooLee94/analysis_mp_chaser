@@ -28,6 +28,10 @@ mp_chaser::Analyzer::Analyzer() : nh_("~") {
     pub_target1_total_trajectory_ = nh_.advertise<nav_msgs::Path>("target1_total_trajectory",1);
     pub_target2_total_trajectory_ = nh_.advertise<nav_msgs::Path>("target2_total_trajectory",1);
     pub_total_bearing_vector_history_ = nh_.advertise<visualization_msgs::Marker>("bearing_vector_history",1);
+    pub_current_drone_vis_ = nh_.advertise<visualization_msgs::Marker>("current_drone",1);
+    pub_current_target1_vis_ = nh_.advertise<visualization_msgs::Marker>("current_target1",1);
+    pub_current_target2_vis_ = nh_.advertise<visualization_msgs::Marker>("current_target2",1);
+
 
     drone_total_trajectory_vis_.header.frame_id = "world_enu";
     target1_total_trajectory_vis_.header.frame_id = "world_enu";
@@ -40,6 +44,47 @@ mp_chaser::Analyzer::Analyzer() : nh_("~") {
     bearing_vector_vis_.color.b = 0.88;
     bearing_vector_vis_.scale.x = 0.01;
 
+    current_drone_vis_.header.frame_id="world_enu";
+    current_target1_vis_.header.frame_id="world_enu";
+    current_target2_vis_.header.frame_id="world_enu";
+    current_drone_vis_.type = visualization_msgs::Marker::SPHERE;
+    current_target1_vis_.type = visualization_msgs::Marker::SPHERE;
+    current_target2_vis_.type = visualization_msgs::Marker::SPHERE;
+    current_drone_vis_.color.a = 0.7;
+    current_drone_vis_.color.r = 0.0;
+    current_drone_vis_.color.g = 0.0;
+    current_drone_vis_.color.b = 1.0;
+    current_target1_vis_.color.a = 0.7;
+    current_target1_vis_.color.r = 1.0;
+    current_target1_vis_.color.g = 0.0;
+    current_target1_vis_.color.b = 0.0;
+    current_target2_vis_.color.a = 0.7;
+    current_target2_vis_.color.r = 1.0;
+    current_target2_vis_.color.g = 0.0;
+    current_target2_vis_.color.b = 1.0;
+
+    current_drone_vis_.scale.x = 0.8;
+    current_drone_vis_.scale.y = 0.8;
+    current_drone_vis_.scale.z = 0.8;
+    current_target1_vis_.scale.x = 0.6;
+    current_target1_vis_.scale.y = 0.6;
+    current_target1_vis_.scale.z = 1.6;
+    current_target2_vis_.scale.x = 0.6;
+    current_target2_vis_.scale.y = 0.6;
+    current_target2_vis_.scale.z = 1.6;
+
+    current_drone_vis_.pose.orientation.w = 1.0;
+    current_drone_vis_.pose.orientation.x = 0.0;
+    current_drone_vis_.pose.orientation.y = 0.0;
+    current_drone_vis_.pose.orientation.z = 0.0;
+    current_target1_vis_.pose.orientation.w = 1.0;
+    current_target1_vis_.pose.orientation.x = 0.0;
+    current_target1_vis_.pose.orientation.y = 0.0;
+    current_target1_vis_.pose.orientation.z = 0.0;
+    current_target2_vis_.pose.orientation.w = 1.0;
+    current_target2_vis_.pose.orientation.x = 0.0;
+    current_target2_vis_.pose.orientation.y = 0.0;
+    current_target2_vis_.pose.orientation.z = 0.0;
 
     t0_ = ros::Time::now().toSec();
 }
@@ -60,6 +105,9 @@ void mp_chaser::Analyzer::CbDronePose(const nav_msgs::Odometry_<std::allocator<v
     drone_position_.x = pose->pose.pose.position.y;
     drone_position_.y = pose->pose.pose.position.x;
     drone_position_.z = -pose->pose.pose.position.z;
+    current_drone_vis_.pose.position.x = drone_position_.x;
+    current_drone_vis_.pose.position.y = drone_position_.y;
+    current_drone_vis_.pose.position.z = drone_position_.z;
     drone_position_flag_ = true;
 }
 
@@ -67,6 +115,9 @@ void mp_chaser::Analyzer::CbTarget1Pose(const geometry_msgs::PoseStamped_<std::a
     target1_position_.x = pose->pose.position.x;
     target1_position_.y = pose->pose.position.y;
     target1_position_.z = pose->pose.position.z;
+    current_target1_vis_.pose.position.x = target1_position_.x;
+    current_target1_vis_.pose.position.y = target1_position_.y;
+    current_target1_vis_.pose.position.z = target1_position_.z;
     target1_position_flag_ = true;
 }
 
@@ -74,6 +125,9 @@ void mp_chaser::Analyzer::CbTarget2Pose(const geometry_msgs::PoseStamped_<std::a
     target2_position_.x = pose->pose.position.x;
     target2_position_.y = pose->pose.position.y;
     target2_position_.z = pose->pose.position.z;
+    current_target2_vis_.pose.position.x = target2_position_.x;
+    current_target2_vis_.pose.position.y = target2_position_.y;
+    current_target2_vis_.pose.position.z = target2_position_.z;
     target2_position_flag_ = true;
 }
 
@@ -220,6 +274,12 @@ void mp_chaser::Analyzer::PublishVisualization() {
         pub_target2_total_trajectory_.publish(target2_total_trajectory_vis_);
     if(not bearing_vector_vis_.points.empty())
         pub_total_bearing_vector_history_.publish(bearing_vector_vis_);
+    if(drone_position_flag_)
+        pub_current_drone_vis_.publish(current_drone_vis_);
+    if(target1_position_flag_)
+        pub_current_target1_vis_.publish(current_target1_vis_);
+    if(target2_position_flag_)
+        pub_current_target2_vis_.publish(current_target2_vis_);
 }
 
 
