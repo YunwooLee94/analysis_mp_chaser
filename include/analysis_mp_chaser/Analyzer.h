@@ -43,6 +43,11 @@ namespace mp_chaser{
         ros::Publisher pub_target2_total_trajectory_;
         ros::Publisher pub_total_bearing_vector_history_;
 
+        ros::Publisher pub_current_drone_vis_;
+        ros::Publisher pub_current_target1_vis_;
+        ros::Publisher pub_current_target2_vis_;
+
+
         void WriteCurrentPositions();
         void ReadActorTrajectories();
 
@@ -65,6 +70,10 @@ namespace mp_chaser{
         nav_msgs::Path drone_total_trajectory_vis_;
         nav_msgs::Path target1_total_trajectory_vis_;
         nav_msgs::Path target2_total_trajectory_vis_;
+
+        visualization_msgs::Marker current_drone_vis_;
+        visualization_msgs::Marker current_target1_vis_;
+        visualization_msgs::Marker current_target2_vis_;
 
         visualization_msgs::Marker bearing_vector_vis_;
 

@@ -3,7 +3,8 @@ Panels:
     Help Height: 78
     Name: Displays
     Property Tree Widget:
-      Expanded: ~
+      Expanded:
+        - /Target21/Pose1
       Splitter Ratio: 0.5
     Tree Height: 371
   - Class: rviz/Selection
@@ -64,8 +65,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 0.507351279258728
-        Min Value: -1.8612017631530762
+        Max Value: 1.1684142351150513
+        Min Value: -1.9222815036773682
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -95,7 +96,7 @@ Visualization Manager:
           Buffer Length: 1
           Class: rviz/Path
           Color: 0; 0; 255
-          Enabled: true
+          Enabled: false
           Head Diameter: 0.30000001192092896
           Head Length: 0.20000000298023224
           Length: 0.30000001192092896
@@ -114,7 +115,7 @@ Visualization Manager:
           Shaft Length: 0.10000000149011612
           Topic: /analyzer/drone_total_trajectory
           Unreliable: false
-          Value: true
+          Value: false
         - Angle Tolerance: 0.10000000149011612
           Class: rviz/Odometry
           Covariance:
@@ -132,7 +133,7 @@ Visualization Manager:
               Scale: 1
               Value: true
             Value: true
-          Enabled: true
+          Enabled: false
           Keep: 10
           Name: DroneOdometry
           Position Tolerance: 0.10000000149011612
@@ -149,6 +150,14 @@ Visualization Manager:
             Value: Arrow
           Topic: /airsim_node/Chaser/odom_local_ned
           Unreliable: false
+          Value: false
+        - Class: rviz/Marker
+          Enabled: true
+          Marker Topic: /analyzer/current_drone
+          Name: CurrentDrone
+          Namespaces:
+            "": true
+          Queue Size: 100
           Value: true
       Enabled: true
       Name: Drone
@@ -174,7 +183,7 @@ Visualization Manager:
           Buffer Length: 1
           Class: rviz/Path
           Color: 255; 0; 0
-          Enabled: true
+          Enabled: false
           Head Diameter: 0.30000001192092896
           Head Length: 0.20000000298023224
           Length: 0.30000001192092896
@@ -193,6 +202,14 @@ Visualization Manager:
           Shaft Length: 0.10000000149011612
           Topic: /analyzer/target1_total_trajectory
           Unreliable: false
+          Value: false
+        - Class: rviz/Marker
+          Enabled: true
+          Marker Topic: /analyzer/current_target1
+          Name: CurrentTarget1
+          Namespaces:
+            "": true
+          Queue Size: 100
           Value: true
       Enabled: true
       Name: Target1
@@ -203,7 +220,7 @@ Visualization Manager:
           Axes Radius: 0.10000000149011612
           Class: rviz/Pose
           Color: 255; 25; 0
-          Enabled: true
+          Enabled: false
           Head Length: 0.30000001192092896
           Head Radius: 0.10000000149011612
           Name: Pose
@@ -213,7 +230,7 @@ Visualization Manager:
           Shape: Arrow
           Topic: /airsim_node/RunningActorDynamicDraw_2_pose
           Unreliable: false
-          Value: true
+          Value: false
         - Alpha: 1
           Buffer Length: 1
           Class: rviz/Path
@@ -237,6 +254,14 @@ Visualization Manager:
           Shaft Length: 0.10000000149011612
           Topic: /analyzer/target2_total_trajectory
           Unreliable: false
+          Value: true
+        - Class: rviz/Marker
+          Enabled: true
+          Marker Topic: /analyzer/current_target2
+          Name: CurrentTarget2
+          Namespaces:
+            {}
+          Queue Size: 100
           Value: true
       Enabled: true
       Name: Target2
