@@ -7,9 +7,18 @@ using namespace std;
 
 los_keeper::Analyzer::Analyzer() : nh_("~") {
     nh_.param<bool>("is_2d", is_2d_, true);
+    nh_.param<bool>("is_exp",is_exp_,false);
     nh_.param<bool>("write_total_trajectory", write_total_trajectory_, false);
     nh_.param<string>("total_trajectory_filename_write", total_trajectory_filename_write_, "");
     nh_.param<string>("total_trajectory_filename_read", total_trajectory_filename_read_, "");
+
+    // Boundary
+    nh_.param<double>("x_min",boundary_.x_min,0.0);
+    nh_.param<double>("x_max",boundary_.x_max,0.0);
+    nh_.param<double>("y_min",boundary_.y_min,0.0);
+    nh_.param<double>("y_max",boundary_.y_max,0.0);
+    nh_.param<double>("z_min",boundary_.z_min,0.0);
+    nh_.param<double>("z_max",boundary_.z_max,0.0);
 
     keeper_state_subscriber_ = nh_.subscribe("/los_simulator/drone_state", 1, &Analyzer::CallbackKeeperState, this);
     target_state_subscriber_ = nh_.subscribe("/los_simulator/target_state", 1, &Analyzer::CallbackTargetState, this);
@@ -26,6 +35,8 @@ los_keeper::Analyzer::Analyzer() : nh_("~") {
     obstacle_list_total_vis_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>(
             "obstacle_list_total_trajectory_vis", 1);
     bearing_vector_history_publisher_ = nh_.advertise<visualization_msgs::Marker>("bearing_vector_history",1);
+    boundary_vis_publisher_ = nh_.advertise<visualization_msgs::Marker>("boundary_vis",1);
+
 
     keeper_state_vis_.header.frame_id = "map";
     target_state_vis_.header.frame_id = "map";
@@ -45,24 +56,51 @@ los_keeper::Analyzer::Analyzer() : nh_("~") {
     if(is_2d_){
         keeper_state_vis_.scale.x = 0.14;    // TODO: size
         keeper_state_vis_.scale.y = 0.14;
+        if(is_exp_){
+            keeper_state_vis_.scale.x = 0.15;
+            keeper_state_vis_.scale.y = 0.15;
+        }
         keeper_state_vis_.scale.z = 10.0;
         target_state_vis_.scale.x = 0.14;
         target_state_vis_.scale.y = 0.14;
+        if(is_exp_){
+            target_state_vis_.scale.x = 0.15;
+            target_state_vis_.scale.y = 0.15;
+        }
         target_state_vis_.scale.z = 10.0;
         obstacle_state_vis_.scale.x = 0.14;
         obstacle_state_vis_.scale.y = 0.14;
+        if(is_exp_){
+            obstacle_state_vis_.scale.x = 0.15;
+            obstacle_state_vis_.scale.y = 0.15;
+        }
         obstacle_state_vis_.scale.z = 10.0;
     }
     else{
         keeper_state_vis_.scale.x = 0.3;    // TODO: size
         keeper_state_vis_.scale.y = 0.3;
         keeper_state_vis_.scale.z = 0.3;
+        if(is_exp_){
+            keeper_state_vis_.scale.x = 0.15;
+            keeper_state_vis_.scale.y = 0.15;
+            keeper_state_vis_.scale.z = 0.15;
+        }
         target_state_vis_.scale.x = 0.3;
         target_state_vis_.scale.y = 0.3;
         target_state_vis_.scale.z = 0.3;
+        if(is_exp_){
+            target_state_vis_.scale.x = 0.15;
+            target_state_vis_.scale.y = 0.15;
+            target_state_vis_.scale.z = 0.15;
+        }
         obstacle_state_vis_.scale.x = 0.3;
         obstacle_state_vis_.scale.y = 0.3;
         obstacle_state_vis_.scale.z = 0.3;
+        if(is_exp_){
+            obstacle_state_vis_.scale.x = 0.15;
+            obstacle_state_vis_.scale.y = 0.15;
+            obstacle_state_vis_.scale.z = 0.15;
+        }
     }
 
     // color
@@ -109,6 +147,8 @@ los_keeper::Analyzer::Analyzer() : nh_("~") {
     obstacle_prediction_vis_.scale.x = 0.02;
 
     num_obstacle_ = 69; // TODO: Automatically count the number of obstacles.
+    if(is_exp_)
+        num_obstacle_ = 8;
     obstacle_total_trajectory_.resize(num_obstacle_);
 
     keeper_total_trajectory_vis_.header.frame_id = "map";
@@ -153,6 +193,130 @@ los_keeper::Analyzer::Analyzer() : nh_("~") {
     bearing_vector_history_vis_.pose.orientation.y = 0.0;
     bearing_vector_history_vis_.pose.orientation.z = 0.0;
 
+    boundary_vis_.header.frame_id = "map";
+    boundary_vis_.scale.x = 0.1;
+    boundary_vis_.color.a = 1.0;
+    boundary_vis_.color.r = 1.0;
+    boundary_vis_.color.g = 1.0;
+    boundary_vis_.color.b = 0.0;
+    boundary_vis_.type = visualization_msgs::Marker::LINE_LIST;
+    boundary_vis_.ns="Boundary";
+    {
+        geometry_msgs::Point vertex;
+        // seg1
+        vertex.x= boundary_.x_min;
+        vertex.y= boundary_.y_min;
+        vertex.z= boundary_.z_min;
+        boundary_vis_.points.push_back(vertex);
+        vertex.x= boundary_.x_max;
+        vertex.y= boundary_.y_min;
+        vertex.z= boundary_.z_min;
+        boundary_vis_.points.push_back(vertex);
+        // seg2
+        vertex.x= boundary_.x_min;
+        vertex.y= boundary_.y_max;
+        vertex.z= boundary_.z_min;
+        boundary_vis_.points.push_back(vertex);
+        vertex.x= boundary_.x_max;
+        vertex.y= boundary_.y_max;
+        vertex.z= boundary_.z_min;
+        boundary_vis_.points.push_back(vertex);
+        // seg3
+        vertex.x= boundary_.x_min;
+        vertex.y= boundary_.y_min;
+        vertex.z= boundary_.z_max;
+        boundary_vis_.points.push_back(vertex);
+        vertex.x= boundary_.x_max;
+        vertex.y= boundary_.y_min;
+        vertex.z= boundary_.z_max;
+        boundary_vis_.points.push_back(vertex);
+        // seg4
+        vertex.x= boundary_.x_min;
+        vertex.y= boundary_.y_max;
+        vertex.z= boundary_.z_max;
+        boundary_vis_.points.push_back(vertex);
+        vertex.x= boundary_.x_max;
+        vertex.y= boundary_.y_max;
+        vertex.z= boundary_.z_max;
+        boundary_vis_.points.push_back(vertex);
+        // seg5
+        vertex.x= boundary_.x_min;
+        vertex.y= boundary_.y_min;
+        vertex.z= boundary_.z_min;
+        boundary_vis_.points.push_back(vertex);
+        vertex.x= boundary_.x_min;
+        vertex.y= boundary_.y_max;
+        vertex.z= boundary_.z_min;
+        boundary_vis_.points.push_back(vertex);
+        // seg6
+        vertex.x= boundary_.x_max;
+        vertex.y= boundary_.y_min;
+        vertex.z= boundary_.z_min;
+        boundary_vis_.points.push_back(vertex);
+        vertex.x= boundary_.x_max;
+        vertex.y= boundary_.y_max;
+        vertex.z= boundary_.z_min;
+        boundary_vis_.points.push_back(vertex);
+        // seg7
+        vertex.x= boundary_.x_min;
+        vertex.y= boundary_.y_min;
+        vertex.z= boundary_.z_max;
+        boundary_vis_.points.push_back(vertex);
+        vertex.x= boundary_.x_min;
+        vertex.y= boundary_.y_max;
+        vertex.z= boundary_.z_max;
+        boundary_vis_.points.push_back(vertex);
+        // seg8
+        vertex.x= boundary_.x_max;
+        vertex.y= boundary_.y_min;
+        vertex.z= boundary_.z_max;
+        boundary_vis_.points.push_back(vertex);
+        vertex.x= boundary_.x_max;
+        vertex.y= boundary_.y_max;
+        vertex.z= boundary_.z_max;
+        boundary_vis_.points.push_back(vertex);
+        // seg9
+        vertex.x= boundary_.x_min;
+        vertex.y= boundary_.y_min;
+        vertex.z= boundary_.z_min;
+        boundary_vis_.points.push_back(vertex);
+        vertex.x= boundary_.x_min;
+        vertex.y= boundary_.y_min;
+        vertex.z= boundary_.z_max;
+        boundary_vis_.points.push_back(vertex);
+        // seg10
+        vertex.x= boundary_.x_min;
+        vertex.y= boundary_.y_max;
+        vertex.z= boundary_.z_min;
+        boundary_vis_.points.push_back(vertex);
+        vertex.x= boundary_.x_min;
+        vertex.y= boundary_.y_max;
+        vertex.z= boundary_.z_max;
+        boundary_vis_.points.push_back(vertex);
+        // seg11
+        vertex.x= boundary_.x_max;
+        vertex.y= boundary_.y_min;
+        vertex.z= boundary_.z_min;
+        boundary_vis_.points.push_back(vertex);
+        vertex.x= boundary_.x_max;
+        vertex.y= boundary_.y_min;
+        vertex.z= boundary_.z_max;
+        boundary_vis_.points.push_back(vertex);
+        // seg12
+        vertex.x= boundary_.x_max;
+        vertex.y= boundary_.y_max;
+        vertex.z= boundary_.z_min;
+        boundary_vis_.points.push_back(vertex);
+        vertex.x= boundary_.x_max;
+        vertex.y= boundary_.y_max;
+        vertex.z= boundary_.z_max;
+        boundary_vis_.points.push_back(vertex);
+    }
+    boundary_vis_.pose.orientation.w = 1.0;
+    boundary_vis_.pose.orientation.x = 0.0;
+    boundary_vis_.pose.orientation.y = 0.0;
+    boundary_vis_.pose.orientation.z = 0.0;
+
     t0_ = ros::Time::now().toSec();
 }
 
@@ -182,6 +346,7 @@ void los_keeper::Analyzer::VisualizeData() {
         obstacle_list_total_vis_publisher_.publish(obstacle_total_trajectory_vis_);
         bearing_vector_history_publisher_.publish(bearing_vector_history_vis_);
     }
+    boundary_vis_publisher_.publish(boundary_vis_);
 }
 
 void los_keeper::Analyzer::CallbackTargetState(const los_keeper::ObjectStatus_<std::allocator<void>>::ConstPtr &state) {
