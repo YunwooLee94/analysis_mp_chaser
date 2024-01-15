@@ -18,4 +18,11 @@
         <param name="total_trajectory_filename_read" value="$(find analysis_mp_chaser)/data/actor_trajectory_airsim_dual.txt"/>
     </node>
 
+    <include file="$(find mp_chaser)/launch/pro/target_airsim_dual.launch">
+    </include>
+
+    <include file="$(find mp_chaser)/launch/pro/planning_dual.launch">
+    </include>
+
+
 </launch>
