@@ -29,6 +29,15 @@ namespace los_keeper{
         double py;
         double pz;
     };
+
+    struct Boundary{
+        double x_min;
+        double x_max;
+        double y_min;
+        double y_max;
+        double z_min;
+        double z_max;
+    };
     class Analyzer{
     public:
         Analyzer();
@@ -49,12 +58,14 @@ namespace los_keeper{
         ros::Publisher keeper_total_vis_publisher_;
         ros::Publisher obstacle_list_total_vis_publisher_;
         ros::Publisher bearing_vector_history_publisher_;
+        ros::Publisher boundary_vis_publisher_;
 
         void CallbackTargetState(const los_keeper::ObjectStatus::ConstPtr &state);
         void CallbackKeeperState(const los_keeper::ObjectStatus::ConstPtr &state);
         void CallbackObstacleListState(const los_keeper::ObjectStatusArray::ConstPtr  &state_list);
 
         bool is_2d_;
+        bool is_exp_;
         bool write_total_trajectory_;
         string total_trajectory_filename_write_;
         string total_trajectory_filename_read_;
@@ -85,8 +96,9 @@ namespace los_keeper{
         visualization_msgs::Marker obstacle_separate_trajectory_vis_;
         visualization_msgs::MarkerArray obstacle_total_trajectory_vis_;
         visualization_msgs::Marker bearing_vector_history_vis_;
+        visualization_msgs::Marker boundary_vis_;
 
-
+        Boundary boundary_;
 
         void VisualizeData();
         void WriteCurrentPositions();
