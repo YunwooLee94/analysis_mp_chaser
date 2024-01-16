@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="play_bag" default="true"/>
+    <arg name="bag_file_name" default="$(find analysis_mp_chaser)/world/mp_chaser_single_exp.bag"/>
+    <arg name="rviz_display" default="true"/>
+
+    <group if="$(arg play_bag)">
+        <node name="ros_bag_play" pkg="rosbag" type="play" args="--clock -r 1.0 -s 38.0 $(arg bag_file_name)"/>
+    </group>
+    <group if="$(arg rviz_display)">
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find analysis_mp_chaser)/rviz_config/exp_single.rviz"/>
+    </group>
+
+    <node pkg="analysis_mp_chaser" type="analyzer_mp_chaser" name="analyzer" output="screen">
+        <param name="is_dual" value="false"/>
+        <param name="is_exp" value="true"/>
+        <param name="write_total_trajectory" value="false"/>
+        <param name="total_trajectory_filename_write" value="$(find analysis_mp_chaser)/log/actor_trajectory_exp_single.txt"/>
+        <param name="total_trajectory_filename_read" value="$(find analysis_mp_chaser)/data/actor_trajectory_exp_single.txt"/>
+    </node>
+
+    <node pkg="mp_chaser" type="experiment_parser" name="experiment_parser" output="screen">
+        <remap from="/experiment_parser/drone_pose" to="/zed2/zed_node/pose"/>
+        <remap from="/experiment_parser/target1_pos" to="/zed_client/object1_position"/>
+        <remap from="/experiment_parser/target1_pose" to="/airsim_node/RunningActor_2_pose"/>
+        <remap from="/experiment_parser/drone_odom" to="/airsim_node/Chaser/odom_local_ned"/>
+    </node>
+    <node pkg="zed_chasing_utils" type="zed_tf_bridge" name="zed_tf_bridge" output="screen">
+    </node>
+
+    <include file="$(find zed_chasing_utils)/launch/single_target.launch">
+    </include>
+    <include file="$(find octomap_server)/launch/octomap_mapping_analysis.launch"/>
+
+</launch>
