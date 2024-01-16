@@ -9,6 +9,7 @@ using namespace std;
 
 mp_chaser::Analyzer::Analyzer() : nh_("~") {
     nh_.param<bool>("is_dual", is_dual_, false);
+    nh_.param<bool>("is_exp",is_exp_,false);
     nh_.param<bool>("write_total_trajectory", write_total_trajectory_, false);
     nh_.param<std::string>("total_trajectory_filename_write", total_trajectory_filename_write_, "");
     nh_.param<std::string>("total_trajectory_filename_read", total_trajectory_filename_read_, "");
@@ -37,6 +38,13 @@ mp_chaser::Analyzer::Analyzer() : nh_("~") {
     target1_total_trajectory_vis_.header.frame_id = "world_enu";
     target2_total_trajectory_vis_.header.frame_id = "world_enu";
     bearing_vector_vis_.header.frame_id ="world_enu";
+    if(is_exp_){
+        drone_total_trajectory_vis_.header.frame_id = "map";
+        target1_total_trajectory_vis_.header.frame_id = "map";
+        target2_total_trajectory_vis_.header.frame_id = "map";
+        bearing_vector_vis_.header.frame_id ="map";
+    }
+
     bearing_vector_vis_.type = visualization_msgs::Marker::LINE_LIST;
     bearing_vector_vis_.color.a = 0.3;
     bearing_vector_vis_.color.r = 0.54;
@@ -47,6 +55,11 @@ mp_chaser::Analyzer::Analyzer() : nh_("~") {
     current_drone_vis_.header.frame_id="world_enu";
     current_target1_vis_.header.frame_id="world_enu";
     current_target2_vis_.header.frame_id="world_enu";
+    if(is_exp_){
+        current_drone_vis_.header.frame_id="map";
+        current_target1_vis_.header.frame_id="map";
+        current_target2_vis_.header.frame_id="map";
+    }
     current_drone_vis_.type = visualization_msgs::Marker::SPHERE;
     current_target1_vis_.type = visualization_msgs::Marker::SPHERE;
     current_target2_vis_.type = visualization_msgs::Marker::SPHERE;
@@ -111,8 +124,14 @@ void mp_chaser::Analyzer::CbDronePose(const nav_msgs::Odometry_<std::allocator<v
     drone_position_.x = pose->pose.pose.position.y;
     drone_position_.y = pose->pose.pose.position.x;
     drone_position_.z = -pose->pose.pose.position.z;
+    if(is_exp_){
+        drone_position_.x = pose->pose.pose.position.x;
+        drone_position_.y = pose->pose.pose.position.y;
+        drone_position_.z = pose->pose.pose.position.z;
+    }
     current_drone_vis_.pose.position.x = drone_position_.x;
     current_drone_vis_.pose.position.y = drone_position_.y;
+    current_drone_vis_.pose.position.z = drone_position_.z;
     drone_position_flag_ = true;
 }
 
@@ -127,6 +146,8 @@ void mp_chaser::Analyzer::CbTarget1Pose(const geometry_msgs::PoseStamped_<std::a
         current_target1_vis_.pose.position.z = target1_position_.z+0.6;
     else
         current_target1_vis_.pose.position.z = target1_position_.z+0.8;
+    if(is_exp_)
+        current_target1_vis_.pose.position.z = target1_position_.z;
 
     target1_position_flag_ = true;
 }
@@ -142,6 +163,8 @@ void mp_chaser::Analyzer::CbTarget2Pose(const geometry_msgs::PoseStamped_<std::a
         current_target2_vis_.pose.position.z = target2_position_.z+0.6;
     else
         current_target2_vis_.pose.position.z = target2_position_.z+0.8;
+    if(is_exp_)
+        current_target2_vis_.pose.position.z = target2_position_.z;
     target2_position_flag_ = true;
 }
 

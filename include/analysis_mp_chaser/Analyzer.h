@@ -27,6 +27,7 @@ namespace mp_chaser{
         ros::NodeHandle nh_;
         // Parameters
         bool is_dual_;
+        bool is_exp_;
         bool write_total_trajectory_;
         string total_trajectory_filename_write_;
         string total_trajectory_filename_read_;
