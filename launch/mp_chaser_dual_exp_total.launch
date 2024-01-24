@@ -5,10 +5,10 @@
     <arg name="rviz_display" default="true"/>
 
     <group if="$(arg play_bag)">
-        <node name="ros_bag_play" pkg="rosbag" type="play" args="--clock -r 5.0 -s 36.0 $(arg bag_file_name)"/>
+        <node name="ros_bag_play" pkg="rosbag" type="play" args="--clock -r 5.0 -s 36.0 --duration=83 $(arg bag_file_name)"/>
     </group>
     <group if="$(arg rviz_display)">
-        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find analysis_mp_chaser)/rviz_config/exp_dual.rviz"/>
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find analysis_mp_chaser)/rviz_config/exp_dual_total.rviz"/>
     </group>
 
     <node pkg="analysis_mp_chaser" type="analyzer_mp_chaser" name="analyzer" output="screen">
@@ -34,6 +34,6 @@
     </include>
 
 
-<!--    <include file="$(find octomap_server)/launch/octomap_mapping_analysis.launch"/>-->
+    <include file="$(find octomap_server)/launch/octomap_mapping_analysis_dual.launch"/>
 
 </launch>
