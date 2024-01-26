@@ -10,6 +10,11 @@
 #include <fstream>
 #include <vector>
 #include <visualization_msgs/MarkerArray.h>
+#include <sensor_msgs/PointCloud.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/point_cloud_conversion.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl_ros/point_cloud.h>
 
 namespace mp_chaser{
     using namespace std;
@@ -32,12 +37,18 @@ namespace mp_chaser{
         string total_trajectory_filename_write_;
         string total_trajectory_filename_read_;
 
+        bool calculate_min_distance_;
+        string min_distance_file_name_;
+
         ros::Subscriber sub_drone_pose_;
         ros::Subscriber sub_target1_pose_;
         ros::Subscriber sub_target2_pose_;
         void CbDronePose(const nav_msgs::Odometry::ConstPtr &pose);
         void CbTarget1Pose(const geometry_msgs::PoseStamped::ConstPtr &pose);
         void CbTarget2Pose(const geometry_msgs::PoseStamped::ConstPtr &pose);
+
+        ros::Subscriber sub_pcl_;
+        void CbPcl(const sensor_msgs::PointCloud2::ConstPtr &pcl_msgs);
 
         ros::Publisher pub_drone_total_trajectory_;
         ros::Publisher pub_target1_total_trajectory_;
@@ -50,8 +61,8 @@ namespace mp_chaser{
 
 
         void WriteCurrentPositions();
+        void WriteMinDistance();
         void ReadActorTrajectories();
-
         void PublishVisualization();
 
         double t0_;
@@ -77,7 +88,7 @@ namespace mp_chaser{
         visualization_msgs::Marker current_target2_vis_;
 
         visualization_msgs::Marker bearing_vector_vis_;
-
+        pcl::PointCloud<pcl::PointXYZ> pcl_world_;
     };
 }
 

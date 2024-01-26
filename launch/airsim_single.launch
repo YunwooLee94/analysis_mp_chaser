@@ -3,6 +3,7 @@
     <arg name="play_bag" default="true"/>
     <arg name="bag_file_name" default="$(find analysis_mp_chaser)/world/mp_chaser_airsim_single.bag"/>
     <arg name="rviz_display" default="true"/>
+    <arg name="run_planner" default="false"/>
 
     <group if="$(arg play_bag)">
         <node name="ros_bag_play" pkg="rosbag" type="play" args="--clock -r 1.0 -s 5.0 $(arg bag_file_name)"/>
@@ -13,15 +14,20 @@
 
     <node pkg="analysis_mp_chaser" type="analyzer_mp_chaser" name="analyzer" output="screen">
         <param name="is_dual" value="false"/>
+        <param name="calculate_min_distance" value="false"/>
+        <param name="min_distance_file_name" value="$(find analysis_mp_chaser)/log/min_distance_single_sim.txt"/>
         <param name="write_total_trajectory" value="false"/>
-        <param name="total_trajectory_filename_write" value="$(find analysis_mp_chaser)/log/actor_trajectory_airsim_single.txt"/>
-        <param name="total_trajectory_filename_read" value="$(find analysis_mp_chaser)/data/actor_trajectory_airsim_single.txt"/>
+        <param name="total_trajectory_filename_write"
+               value="$(find analysis_mp_chaser)/log/actor_trajectory_airsim_single.txt"/>
+        <param name="total_trajectory_filename_read"
+               value="$(find analysis_mp_chaser)/data/actor_trajectory_airsim_single.txt"/>
     </node>
 
     <include file="$(find mp_chaser)/launch/pro/target_airsim_single.launch">
     </include>
-
-    <include file="$(find mp_chaser)/launch/pro/planning_single.launch">
-    </include>
+    <group if="$(arg run_planner)">
+        <include file="$(find mp_chaser)/launch/pro/planning_single.launch">
+        </include>
+    </group>
 
 </launch>

@@ -10,7 +10,9 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
         tf
         los_keeper
-)
+        pcl_ros
+        pcl_conversions
+        )
 
 catkin_package(
     LIBRARIES

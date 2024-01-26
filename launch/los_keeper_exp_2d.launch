@@ -3,6 +3,7 @@
     <arg name="play_bag" default="true"/>
     <arg name="bag_file_name" default="$(find analysis_mp_chaser)/world/los_keeper_exp_2d.bag"/>
     <arg name="rviz_display" default="true"/>
+    <arg name="run_planner" default="false"/>
 
     <group if="$(arg play_bag)">
         <node name="ros_bag_play" pkg="rosbag" type="play" args="--clock -r 1.0 -s 0.0 $(arg bag_file_name)"/>
@@ -15,6 +16,8 @@
         <param name="is_2d" value="true"/>
         <param name="is_exp" value="true"/>
         <param name="write_total_trajectory" value="false"/>
+        <param name="calculate_min_distance" value="false"/>
+        <param name="min_distance_file_name" value="$(find analysis_mp_chaser)/log/min_distance_2d_exp.txt"/>
         <param name="total_trajectory_filename_write" value="$(find analysis_mp_chaser)/log/actor_trajectory_exp_2d.txt"/>
         <param name="total_trajectory_filename_read" value="$(find analysis_mp_chaser)/data/actor_trajectory_exp_2d.txt"/>
         <remap from="/los_simulator/drone_state" to="/experiment_parser/keeper_state"/>
@@ -27,10 +30,13 @@
         <param name="z_min" value="-2.0"/>
         <param name="z_max" value="2.0"/>
     </node>
-    <node pkg="los_keeper" type="los_keeper" name="los_keeper" output="screen">
-        <rosparam command="load" file="$(find los_keeper)/param/log_plan_2d_exp_multi_thread.yaml"/>
-        <rosparam command="load" file="$(find los_keeper)/param/visualization_experiment.yaml"/>
-    </node>
+    <group if="$(arg run_planner)">
+        <node pkg="los_keeper" type="los_keeper" name="los_keeper" output="screen">
+            <rosparam command="load" file="$(find los_keeper)/param/log_plan_2d_exp_multi_thread.yaml"/>
+            <rosparam command="load" file="$(find los_keeper)/param/visualization_experiment.yaml"/>
+        </node>
+    </group>
+
     <node pkg="tf" type="static_transform_publisher" name="world2map" args="0 0 0 0 0 0 world map 100"/>
 
 </launch>
