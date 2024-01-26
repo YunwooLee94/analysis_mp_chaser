@@ -67,6 +67,8 @@ namespace los_keeper{
         bool is_2d_;
         bool is_exp_;
         bool write_total_trajectory_;
+        bool calculate_min_distance_;
+        string min_distance_filename_;
         string total_trajectory_filename_write_;
         string total_trajectory_filename_read_;
 
@@ -102,6 +104,7 @@ namespace los_keeper{
 
         void VisualizeData();
         void WriteCurrentPositions();
+        void WriteMinDistance();
         void ReadActorTrajectories();
 
 

@@ -14,6 +14,8 @@
     <node pkg="analysis_mp_chaser" type="analyzer_mp_chaser" name="analyzer" output="screen">
         <param name="is_dual" value="false"/>
         <param name="is_exp" value="true"/>
+        <param name="calculate_min_distance" value="false"/>
+        <param name="min_distance_file_name" value="$(find analysis_mp_chaser)/log/min_distance_single_exp.txt"/>
         <param name="write_total_trajectory" value="false"/>
         <param name="total_trajectory_filename_write" value="$(find analysis_mp_chaser)/log/actor_trajectory_exp_single.txt"/>
         <param name="total_trajectory_filename_read" value="$(find analysis_mp_chaser)/data/actor_trajectory_exp_single.txt"/>

@@ -9,10 +9,13 @@ using namespace std;
 
 mp_chaser::Analyzer::Analyzer() : nh_("~") {
     nh_.param<bool>("is_dual", is_dual_, false);
-    nh_.param<bool>("is_exp",is_exp_,false);
+    nh_.param<bool>("is_exp", is_exp_, false);
     nh_.param<bool>("write_total_trajectory", write_total_trajectory_, false);
     nh_.param<std::string>("total_trajectory_filename_write", total_trajectory_filename_write_, "");
     nh_.param<std::string>("total_trajectory_filename_read", total_trajectory_filename_read_, "");
+
+    nh_.param<bool>("calculate_min_distance", calculate_min_distance_, false);
+    nh_.param<string>("min_distance_file_name", min_distance_file_name_, "");
 
     // Subscriber
     sub_drone_pose_ = nh_.subscribe("/airsim_node/Chaser/odom_local_ned", 1, &Analyzer::CbDronePose, this);
@@ -24,25 +27,30 @@ mp_chaser::Analyzer::Analyzer() : nh_("~") {
         sub_target2_pose_ = nh_.subscribe("/airsim_node/RunningActorDynamicDraw_2_pose", 1, &Analyzer::CbTarget2Pose,
                                           this);
     }
+    if(is_exp_)
+        sub_pcl_ = nh_.subscribe("/zed_client/points_masked", 1, &Analyzer::CbPcl, this);
+    else
+        sub_pcl_ = nh_.subscribe("/airsim_parser/point_cloud_world", 1, &Analyzer::CbPcl, this);
+
     // Publisher
-    pub_drone_total_trajectory_ = nh_.advertise<nav_msgs::Path>("drone_total_trajectory",1);
-    pub_target1_total_trajectory_ = nh_.advertise<nav_msgs::Path>("target1_total_trajectory",1);
-    pub_target2_total_trajectory_ = nh_.advertise<nav_msgs::Path>("target2_total_trajectory",1);
-    pub_total_bearing_vector_history_ = nh_.advertise<visualization_msgs::Marker>("bearing_vector_history",1);
-    pub_current_drone_vis_ = nh_.advertise<visualization_msgs::Marker>("current_drone",1);
-    pub_current_target1_vis_ = nh_.advertise<visualization_msgs::Marker>("current_target1",1);
-    pub_current_target2_vis_ = nh_.advertise<visualization_msgs::Marker>("current_target2",1);
+    pub_drone_total_trajectory_ = nh_.advertise<nav_msgs::Path>("drone_total_trajectory", 1);
+    pub_target1_total_trajectory_ = nh_.advertise<nav_msgs::Path>("target1_total_trajectory", 1);
+    pub_target2_total_trajectory_ = nh_.advertise<nav_msgs::Path>("target2_total_trajectory", 1);
+    pub_total_bearing_vector_history_ = nh_.advertise<visualization_msgs::Marker>("bearing_vector_history", 1);
+    pub_current_drone_vis_ = nh_.advertise<visualization_msgs::Marker>("current_drone", 1);
+    pub_current_target1_vis_ = nh_.advertise<visualization_msgs::Marker>("current_target1", 1);
+    pub_current_target2_vis_ = nh_.advertise<visualization_msgs::Marker>("current_target2", 1);
 
 
     drone_total_trajectory_vis_.header.frame_id = "world_enu";
     target1_total_trajectory_vis_.header.frame_id = "world_enu";
     target2_total_trajectory_vis_.header.frame_id = "world_enu";
-    bearing_vector_vis_.header.frame_id ="world_enu";
-    if(is_exp_){
+    bearing_vector_vis_.header.frame_id = "world_enu";
+    if (is_exp_) {
         drone_total_trajectory_vis_.header.frame_id = "map";
         target1_total_trajectory_vis_.header.frame_id = "map";
         target2_total_trajectory_vis_.header.frame_id = "map";
-        bearing_vector_vis_.header.frame_id ="map";
+        bearing_vector_vis_.header.frame_id = "map";
     }
 
     bearing_vector_vis_.type = visualization_msgs::Marker::LINE_LIST;
@@ -52,13 +60,13 @@ mp_chaser::Analyzer::Analyzer() : nh_("~") {
     bearing_vector_vis_.color.b = 0.88;
     bearing_vector_vis_.scale.x = 0.01;
 
-    current_drone_vis_.header.frame_id="world_enu";
-    current_target1_vis_.header.frame_id="world_enu";
-    current_target2_vis_.header.frame_id="world_enu";
-    if(is_exp_){
-        current_drone_vis_.header.frame_id="map";
-        current_target1_vis_.header.frame_id="map";
-        current_target2_vis_.header.frame_id="map";
+    current_drone_vis_.header.frame_id = "world_enu";
+    current_target1_vis_.header.frame_id = "world_enu";
+    current_target2_vis_.header.frame_id = "world_enu";
+    if (is_exp_) {
+        current_drone_vis_.header.frame_id = "map";
+        current_target1_vis_.header.frame_id = "map";
+        current_target2_vis_.header.frame_id = "map";
     }
     current_drone_vis_.type = visualization_msgs::Marker::SPHERE;
     current_target1_vis_.type = visualization_msgs::Marker::SPHERE;
@@ -81,13 +89,13 @@ mp_chaser::Analyzer::Analyzer() : nh_("~") {
     current_drone_vis_.scale.z = 0.8;
     current_target1_vis_.scale.x = 0.6;
     current_target1_vis_.scale.y = 0.6;
-    if(is_dual_)
+    if (is_dual_)
         current_target1_vis_.scale.z = 1.2;
     else
         current_target1_vis_.scale.z = 1.6;
     current_target2_vis_.scale.x = 0.6;
     current_target2_vis_.scale.y = 0.6;
-    if(is_dual_)
+    if (is_dual_)
         current_target2_vis_.scale.z = 1.2;
     else
         current_target2_vis_.scale.z = 1.6;
@@ -114,6 +122,8 @@ void mp_chaser::Analyzer::run() {
     while (ros::ok()) {
         if (write_total_trajectory_)
             WriteCurrentPositions();
+        if (calculate_min_distance_)
+            WriteMinDistance();
         PublishVisualization();
         ros::spinOnce();
         loop_rate.sleep();
@@ -124,7 +134,7 @@ void mp_chaser::Analyzer::CbDronePose(const nav_msgs::Odometry_<std::allocator<v
     drone_position_.x = pose->pose.pose.position.y;
     drone_position_.y = pose->pose.pose.position.x;
     drone_position_.z = -pose->pose.pose.position.z;
-    if(is_exp_){
+    if (is_exp_) {
         drone_position_.x = pose->pose.pose.position.x;
         drone_position_.y = pose->pose.pose.position.y;
         drone_position_.z = pose->pose.pose.position.z;
@@ -142,11 +152,11 @@ void mp_chaser::Analyzer::CbTarget1Pose(const geometry_msgs::PoseStamped_<std::a
     current_target1_vis_.pose.position.x = target1_position_.x;
     current_target1_vis_.pose.position.y = target1_position_.y;
     current_target1_vis_.pose.position.z = target1_position_.z;
-    if(is_dual_)
-        current_target1_vis_.pose.position.z = target1_position_.z+0.6;
+    if (is_dual_)
+        current_target1_vis_.pose.position.z = target1_position_.z + 0.6;
     else
-        current_target1_vis_.pose.position.z = target1_position_.z+0.8;
-    if(is_exp_)
+        current_target1_vis_.pose.position.z = target1_position_.z + 0.8;
+    if (is_exp_)
         current_target1_vis_.pose.position.z = target1_position_.z;
 
     target1_position_flag_ = true;
@@ -159,11 +169,11 @@ void mp_chaser::Analyzer::CbTarget2Pose(const geometry_msgs::PoseStamped_<std::a
     current_target2_vis_.pose.position.x = target2_position_.x;
     current_target2_vis_.pose.position.y = target2_position_.y;
     current_target2_vis_.pose.position.z = target2_position_.z;
-    if(is_dual_)
-        current_target2_vis_.pose.position.z = target2_position_.z+0.6;
+    if (is_dual_)
+        current_target2_vis_.pose.position.z = target2_position_.z + 0.6;
     else
-        current_target2_vis_.pose.position.z = target2_position_.z+0.8;
-    if(is_exp_)
+        current_target2_vis_.pose.position.z = target2_position_.z + 0.8;
+    if (is_exp_)
         current_target2_vis_.pose.position.z = target2_position_.z;
     target2_position_flag_ = true;
 }
@@ -227,7 +237,7 @@ void mp_chaser::Analyzer::ReadActorTrajectories() {
         drone_pose_temp.pose.orientation.x = 0.0;
         drone_pose_temp.pose.orientation.y = 0.0;
         drone_pose_temp.pose.orientation.z = 0.0;
-        for (const auto & position_temp : drone_total_trajectory_) {
+        for (const auto &position_temp: drone_total_trajectory_) {
             drone_pose_temp.pose.position.x = position_temp.x;
             drone_pose_temp.pose.position.y = position_temp.y;
             drone_pose_temp.pose.position.z = position_temp.z;
@@ -240,7 +250,7 @@ void mp_chaser::Analyzer::ReadActorTrajectories() {
         target1_pose_temp.pose.orientation.x = 0.0;
         target1_pose_temp.pose.orientation.y = 0.0;
         target1_pose_temp.pose.orientation.z = 0.0;
-        for (const auto & position_temp : target1_total_trajectory_) {
+        for (const auto &position_temp: target1_total_trajectory_) {
             target1_pose_temp.pose.position.x = position_temp.x;
             target1_pose_temp.pose.position.y = position_temp.y;
             target1_pose_temp.pose.position.z = position_temp.z;
@@ -253,18 +263,18 @@ void mp_chaser::Analyzer::ReadActorTrajectories() {
         target2_pose_temp.pose.orientation.x = 0.0;
         target2_pose_temp.pose.orientation.y = 0.0;
         target2_pose_temp.pose.orientation.z = 0.0;
-        for (const auto & position_temp : target2_total_trajectory_) {
+        for (const auto &position_temp: target2_total_trajectory_) {
             target2_pose_temp.pose.position.x = position_temp.x;
             target2_pose_temp.pose.position.y = position_temp.y;
             target2_pose_temp.pose.position.z = position_temp.z;
             target2_total_trajectory_vis_.poses.push_back(target2_pose_temp);
         }
     }
-    if(not is_dual_){
-        if(not(drone_total_trajectory_.empty() or target1_total_trajectory_.empty())){
+    if (not is_dual_) {
+        if (not(drone_total_trajectory_.empty() or target1_total_trajectory_.empty())) {
             geometry_msgs::Point drone_position_temp;
             geometry_msgs::Point target1_position_temp;
-            for(int i =0;i<drone_total_trajectory_.size();i++){
+            for (int i = 0; i < drone_total_trajectory_.size(); i++) {
                 drone_position_temp.x = drone_total_trajectory_[i].x;
                 drone_position_temp.y = drone_total_trajectory_[i].y;
                 drone_position_temp.z = drone_total_trajectory_[i].z;
@@ -275,13 +285,13 @@ void mp_chaser::Analyzer::ReadActorTrajectories() {
                 bearing_vector_vis_.points.push_back(target1_position_temp);
             }
         }
-    }
-    else{
-        if(not(drone_total_trajectory_.empty() or target1_total_trajectory_.empty() or target2_total_trajectory_.empty())){
+    } else {
+        if (not(drone_total_trajectory_.empty() or target1_total_trajectory_.empty() or
+                target2_total_trajectory_.empty())) {
             geometry_msgs::Point drone_position_temp;
             geometry_msgs::Point target1_position_temp;
             geometry_msgs::Point target2_position_temp;
-            for(int i =0;i<drone_total_trajectory_.size();i++){
+            for (int i = 0; i < drone_total_trajectory_.size(); i++) {
                 //target1
                 drone_position_temp.x = drone_total_trajectory_[i].x;
                 drone_position_temp.y = drone_total_trajectory_[i].y;
@@ -303,20 +313,67 @@ void mp_chaser::Analyzer::ReadActorTrajectories() {
 }
 
 void mp_chaser::Analyzer::PublishVisualization() {
-    if(not drone_total_trajectory_vis_.poses.empty())
+    if (not drone_total_trajectory_vis_.poses.empty())
         pub_drone_total_trajectory_.publish(drone_total_trajectory_vis_);
-    if(not target1_total_trajectory_vis_.poses.empty())
+    if (not target1_total_trajectory_vis_.poses.empty())
         pub_target1_total_trajectory_.publish(target1_total_trajectory_vis_);
-    if(not target2_total_trajectory_vis_.poses.empty())
+    if (not target2_total_trajectory_vis_.poses.empty())
         pub_target2_total_trajectory_.publish(target2_total_trajectory_vis_);
-    if(not bearing_vector_vis_.points.empty())
+    if (not bearing_vector_vis_.points.empty())
         pub_total_bearing_vector_history_.publish(bearing_vector_vis_);
-    if(drone_position_flag_)
+    if (drone_position_flag_)
         pub_current_drone_vis_.publish(current_drone_vis_);
-    if(target1_position_flag_)
+    if (target1_position_flag_)
         pub_current_target1_vis_.publish(current_target1_vis_);
-    if(target2_position_flag_)
+    if (target2_position_flag_)
         pub_current_target2_vis_.publish(current_target2_vis_);
+}
+
+void mp_chaser::Analyzer::CbPcl(const sensor_msgs::PointCloud2_<allocator<void>>::ConstPtr &pcl_msgs) {
+    pcl_world_.clear();
+    pcl::fromROSMsg(*pcl_msgs, pcl_world_);
+}
+
+void mp_chaser::Analyzer::WriteMinDistance() {
+    double current_time = ros::Time::now().toSec() - t0_;
+    ofstream outfile;
+    outfile.open(min_distance_file_name_, ios_base::app);
+    if (is_dual_) {
+        if (drone_position_flag_ and target1_position_flag_ and target2_position_flag_ and not pcl_world_.points.empty()) {
+            double min_distance = sqrt(
+                    pow(drone_position_.x - target1_position_.x, 2) + pow(drone_position_.y - target1_position_.y, 2) +
+                    pow(drone_position_.z - target1_position_.z, 2)) - 0.4 - 0.3;
+            double distance = sqrt(
+                    pow(drone_position_.x - target2_position_.x, 2) + pow(drone_position_.y - target2_position_.y, 2) +
+                    pow(drone_position_.z - target2_position_.z, 2)) - 0.4 - 0.3;
+            if(min_distance>distance)
+                min_distance = distance;
+            for (int i = 0; i < pcl_world_.points.size(); i++) {
+                distance = sqrt(pow(drone_position_.x - pcl_world_.points[i].x, 2) +
+                                pow(drone_position_.y - pcl_world_.points[i].y, 2) +
+                                pow(drone_position_.z - pcl_world_.points[i].z, 2)) - 0.4;
+                if(min_distance>distance)
+                    min_distance = distance;
+            }
+            outfile<<current_time<<" "<<min_distance<<endl;
+        }
+    } else {
+        if (drone_position_flag_ and target1_position_flag_ and not pcl_world_.points.empty()) {
+            double min_distance = sqrt(
+                    pow(drone_position_.x - target1_position_.x, 2) + pow(drone_position_.y - target1_position_.y, 2) +
+                    pow(drone_position_.z - target1_position_.z, 2)) - 0.4 - 0.3;
+            double distance;
+            for (int i = 0; i < pcl_world_.points.size(); i++) {
+                distance = sqrt(pow(drone_position_.x - pcl_world_.points[i].x, 2) +
+                                pow(drone_position_.y - pcl_world_.points[i].y, 2) +
+                                pow(drone_position_.z - pcl_world_.points[i].z, 2)) - 0.4;
+                if(min_distance>distance)
+                    min_distance = distance;
+            }
+            outfile<<current_time<<" "<<min_distance<<endl;
+        }
+    }
+    outfile.close();
 }
 
 
