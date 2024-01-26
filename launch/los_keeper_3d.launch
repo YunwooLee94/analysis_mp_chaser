@@ -17,6 +17,8 @@
         <param name="write_total_trajectory" value="false"/>
         <param name="calculate_min_distance" value="false"/>
         <param name="min_distance_file_name" value="$(find analysis_mp_chaser)/log/min_distance_3d_sim.txt"/>
+        <param name="calculate_visibility_score" value="false"/>
+        <param name="visibility_score_file_name" value="$(find analysis_mp_chaser)/log/visibility_score_3d_sim.txt"/>
         <param name="total_trajectory_filename_write"
                value="$(find analysis_mp_chaser)/log/actor_trajectory_simulator_3d.txt"/>
         <param name="total_trajectory_filename_read"
