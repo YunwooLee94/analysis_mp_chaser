@@ -69,6 +69,9 @@ namespace los_keeper{
         bool write_total_trajectory_;
         bool calculate_min_distance_;
         string min_distance_filename_;
+        bool calculate_visibility_score_;
+        string visibility_score_filename_;
+
         string total_trajectory_filename_write_;
         string total_trajectory_filename_read_;
 
@@ -106,7 +109,8 @@ namespace los_keeper{
         void WriteCurrentPositions();
         void WriteMinDistance();
         void ReadActorTrajectories();
-
+        void WriteVisibilityScore();
+        double GetVisibilityScore(const Point &keeper, const Point &target, const Point &obstacle, const double &radius);
 
     };
 }

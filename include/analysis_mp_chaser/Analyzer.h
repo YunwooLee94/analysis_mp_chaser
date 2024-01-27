@@ -40,6 +40,9 @@ namespace mp_chaser{
         bool calculate_min_distance_;
         string min_distance_file_name_;
 
+        bool calculate_visibility_score_;
+        string visibility_score_file_name_;
+
         ros::Subscriber sub_drone_pose_;
         ros::Subscriber sub_target1_pose_;
         ros::Subscriber sub_target2_pose_;
@@ -64,6 +67,7 @@ namespace mp_chaser{
         void WriteMinDistance();
         void ReadActorTrajectories();
         void PublishVisualization();
+        void WriteVisibilityScore();
 
         double t0_;
         Point drone_position_;
@@ -89,6 +93,8 @@ namespace mp_chaser{
 
         visualization_msgs::Marker bearing_vector_vis_;
         pcl::PointCloud<pcl::PointXYZ> pcl_world_;
+        double GetVisibilityScore(const Point &keeper, const Point &target, const Point &obstacle, const double &radius);
+
     };
 }
 

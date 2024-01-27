@@ -12,6 +12,9 @@ los_keeper::Analyzer::Analyzer() : nh_("~") {
     nh_.param<bool>("calculate_min_distance", calculate_min_distance_, false);
     nh_.param<string>("min_distance_file_name", min_distance_filename_, "");
 
+    nh_.param<bool>("calculate_visibility_score", calculate_visibility_score_, false);
+    nh_.param<string>("visibility_score_file_name", visibility_score_filename_, "");
+
     nh_.param<bool>("write_total_trajectory", write_total_trajectory_, false);
     nh_.param<string>("total_trajectory_filename_write", total_trajectory_filename_write_, "");
     nh_.param<string>("total_trajectory_filename_read", total_trajectory_filename_read_, "");
@@ -330,6 +333,8 @@ void los_keeper::Analyzer::run() {
             WriteCurrentPositions();
         if (calculate_min_distance_)
             WriteMinDistance();
+        if(calculate_visibility_score_)
+            WriteVisibilityScore();
         VisualizeData();
         ros::spinOnce();
         loop_rate.sleep();
@@ -501,5 +506,47 @@ void los_keeper::Analyzer::ReadActorTrajectories() {
         bearing_vector_history_vis_.points.push_back(keeper_total_trajectory_vis_.points[i]);
         bearing_vector_history_vis_.points.push_back(target_total_trajectory_vis_.points[i]);
     }
+}
+
+void los_keeper::Analyzer::WriteVisibilityScore() {
+    double current_time = ros::Time::now().toSec() - t0_;
+    ofstream outfile;
+    outfile.open(visibility_score_filename_, ios_base::app);
+    if (got_keeper_info and got_target_info and got_obstacle_info) {
+        double min_visibility = 10000000.0;
+        double visibility_score;
+        Point keeper_position{current_keeper_state_.px,current_keeper_state_.py,current_keeper_state_.pz};
+        Point target_position{current_target_state_.px,current_target_state_.py,current_target_state_.pz};
+        for(int i = 0;i<current_obstacle_list_state_.size();i++){
+            Point obstacle_position{current_obstacle_list_state_[i].px,current_obstacle_list_state_[i].py,current_obstacle_list_state_[i].pz};
+            if(is_2d_ and is_exp_)
+                visibility_score = GetVisibilityScore(keeper_position,target_position,obstacle_position,0.075);
+            if(is_2d_ and not is_exp_)
+                visibility_score = GetVisibilityScore(keeper_position,target_position,obstacle_position,0.07);
+            if(not is_2d_ and is_exp_)
+                visibility_score = GetVisibilityScore(keeper_position,target_position,obstacle_position,0.075);
+            if(not is_2d_ and not is_exp_)
+                visibility_score = GetVisibilityScore(keeper_position,target_position,obstacle_position,0.15);
+            if(min_visibility>visibility_score)
+                min_visibility = visibility_score;
+        }
+        outfile<<current_time<<" "<<min_visibility<<endl;
+    }
+    outfile.close();
+}
+
+double los_keeper::Analyzer::GetVisibilityScore(const los_keeper::Point &keeper, const los_keeper::Point &target,
+                                              const los_keeper::Point &obstacle, const double &radius) {
+    double segment_squared =  pow(keeper.px-target.px,2)+ pow(keeper.py-target.py,2)+ pow(keeper.pz-target.pz,2);
+    if(segment_squared<0.00001)
+        return sqrt(segment_squared);
+    double dot_result = (obstacle.px-target.px)*(keeper.px-target.px)+(obstacle.py-target.py)*(keeper.py-target.py)+(obstacle.pz-target.pz)*(keeper.pz-target.pz);
+    double t = max(0.0,min(1.0,dot_result/segment_squared));
+    Point projected_points;
+    projected_points.px = target.px + t* (keeper.px-target.px);
+    projected_points.py = target.py + t* (keeper.py-target.py);
+    projected_points.pz = target.pz + t* (keeper.pz-target.pz);
+    double score_squared = sqrt(pow(obstacle.px-projected_points.px,2)+pow(obstacle.py-projected_points.py,2)+pow(obstacle.pz-projected_points.pz,2))-radius;
+    return score_squared;
 }
 
