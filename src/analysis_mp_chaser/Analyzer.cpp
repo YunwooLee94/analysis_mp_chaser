@@ -17,6 +17,9 @@ mp_chaser::Analyzer::Analyzer() : nh_("~") {
     nh_.param<bool>("calculate_min_distance", calculate_min_distance_, false);
     nh_.param<string>("min_distance_file_name", min_distance_file_name_, "");
 
+    nh_.param<bool>("calculate_visibility_score", calculate_visibility_score_, false);
+    nh_.param<string>("visibility_score_file_name", visibility_score_file_name_, "");
+
     // Subscriber
     sub_drone_pose_ = nh_.subscribe("/airsim_node/Chaser/odom_local_ned", 1, &Analyzer::CbDronePose, this);
     if (not is_dual_) { // SINGLE TARGET
@@ -124,6 +127,8 @@ void mp_chaser::Analyzer::run() {
             WriteCurrentPositions();
         if (calculate_min_distance_)
             WriteMinDistance();
+        if (calculate_visibility_score_)
+            WriteVisibilityScore();
         PublishVisualization();
         ros::spinOnce();
         loop_rate.sleep();
@@ -333,6 +338,40 @@ void mp_chaser::Analyzer::CbPcl(const sensor_msgs::PointCloud2_<allocator<void>>
     pcl_world_.clear();
     pcl::fromROSMsg(*pcl_msgs, pcl_world_);
 }
+void mp_chaser::Analyzer::WriteVisibilityScore() {
+    double current_time = ros::Time::now().toSec() - t0_;
+    ofstream outfile;
+    outfile.open(visibility_score_file_name_, ios_base::app);
+    if(is_dual_){
+        double min_visibility = 10000000.0;
+        double visibility_score;
+        if (drone_position_flag_ and target1_position_flag_ and target2_position_flag_ and not pcl_world_.points.empty()){
+            for(int i =0;i<pcl_world_.points.size();i++){
+                Point obstacle_position{pcl_world_.points[i].x,pcl_world_.points[i].y,pcl_world_.points[i].z};
+                visibility_score = GetVisibilityScore(drone_position_,target1_position_,obstacle_position,0.0);
+                if(min_visibility>visibility_score)
+                    min_visibility = visibility_score;
+                visibility_score = GetVisibilityScore(drone_position_,target2_position_,obstacle_position,0.0);
+                if(min_visibility>visibility_score)
+                    min_visibility = visibility_score;
+            }
+            outfile<<current_time<<" "<<min_visibility<<endl;
+        }
+    }
+    else{
+        double min_visibility = 10000000.0;
+        double visibility_score;
+        if (drone_position_flag_ and target1_position_flag_ and not pcl_world_.points.empty()){
+            for(int i =0;i<pcl_world_.points.size();i++){
+                Point obstacle_position{pcl_world_.points[i].x,pcl_world_.points[i].y,pcl_world_.points[i].z};
+                visibility_score = GetVisibilityScore(drone_position_,target1_position_,obstacle_position,0.0);
+                if(min_visibility>visibility_score)
+                    min_visibility = visibility_score;
+            }
+            outfile<<current_time<<" "<<min_visibility<<endl;
+        }
+    }
+}
 
 void mp_chaser::Analyzer::WriteMinDistance() {
     double current_time = ros::Time::now().toSec() - t0_;
@@ -375,6 +414,22 @@ void mp_chaser::Analyzer::WriteMinDistance() {
     }
     outfile.close();
 }
+
+double mp_chaser::Analyzer::GetVisibilityScore(const mp_chaser::Point &keeper, const mp_chaser::Point &target,
+                                               const mp_chaser::Point &obstacle, const double &radius) {
+    double segment_squared =  pow(keeper.x-target.x,2)+ pow(keeper.y-target.y,2)+ pow(keeper.z-target.z,2);
+    if(segment_squared<0.00001)
+        return sqrt(segment_squared);
+    double dot_result = (obstacle.x-target.x)*(keeper.x-target.x)+(obstacle.y-target.y)*(keeper.y-target.y)+(obstacle.z-target.z)*(keeper.z-target.z);
+    double t = max(0.0,min(1.0,dot_result/segment_squared));
+    Point projected_points;
+    projected_points.x = target.x + t* (keeper.x-target.x);
+    projected_points.y = target.y + t* (keeper.y-target.y);
+    projected_points.z = target.z + t* (keeper.z-target.z);
+    double score_squared = sqrt(pow(obstacle.x-projected_points.x,2)+pow(obstacle.y-projected_points.y,2)+pow(obstacle.z-projected_points.z,2))-radius;
+    return score_squared;
+}
+
 
 
 
