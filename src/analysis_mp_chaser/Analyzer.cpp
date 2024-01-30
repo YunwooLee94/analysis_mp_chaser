@@ -165,6 +165,16 @@ void mp_chaser::Analyzer::CbTarget1Pose(const geometry_msgs::PoseStamped_<std::a
         current_target1_vis_.pose.position.z = target1_position_.z;
 
     target1_position_flag_ = true;
+//    static double integrated_distance = 0.0;
+//    static double target1_position_history_x = target1_position_.x;
+//    static double target1_position_history_y = target1_position_.y;
+//    static double target1_position_history_z = target1_position_.z;
+//    integrated_distance += sqrt(pow(target1_position_.x-target1_position_history_x,2)+pow(target1_position_.y-target1_position_history_y,2)+
+//            pow(target1_position_.z-target1_position_history_z,2));
+//    target1_position_history_x = target1_position_.x;
+//    target1_position_history_y = target1_position_.y;
+//    target1_position_history_z = target1_position_.z;
+//    printf("INTEGRATED DISTANCE: %f \n",integrated_distance);
 }
 
 void mp_chaser::Analyzer::CbTarget2Pose(const geometry_msgs::PoseStamped_<std::allocator<void>>::ConstPtr &pose) {
